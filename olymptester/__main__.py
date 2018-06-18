@@ -18,7 +18,7 @@ Correct:
 # Message lambda
 pass_message = lambda s1,elapsed:'Test {:3d} OK, {:5.3f} sec'.format(s1,elapsed)
 
-def RunTest(subproc,test):
+def run_test(subproc,test):
     input_text = test[0].strip() 
     output_text = test[1].strip() 
 
@@ -64,7 +64,7 @@ def main():
 
     for i,test in enumerate(r.findall(raw_tests)):
         start_time = time.time()
-        out = RunTest(subproc,test)
+        out = run_test(subproc,test)
         end_time = time.time()
         elapsed = end_time - start_time
         if out:
