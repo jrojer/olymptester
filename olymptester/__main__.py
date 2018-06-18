@@ -35,31 +35,35 @@ def run_test(subproc,test):
 def main():
 
     # check arguments
-    if len(sys.argv) != 2:
-        print('arguments are: name')
+    if len(sys.argv) != 3:
+        print('arguments are: executable, tests')
         return
 
     # process arguments
     subproc = None
     path_to_exe = pathlib.Path(sys.argv[1]).absolute()
+    path_to_tests = pathlib.Path(sys.argv[2]).absolute()
     if path_to_exe.suffix == '.py':
-        subproc = ['python3',str(path_to_exe)]
+        subproc = ['python',str(path_to_exe)]
     else:
         subproc = [str(path_to_exe)]
 
     try:
         subprocess.check_call(subproc,timeout=1)
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print('bad process call:',subproc)
         return
     except subprocess.TimeoutExpired:
         pass
 
-    #tests_filename = 'tests.txt'
-    tests_filename = path_to_exe.stem + '.tests'
     raw_tests = ''
-    with open(tests_filename,'r') as fd:
-        raw_tests = fd.read()
-
+    try:
+        with open(path_to_tests,'r') as fd:
+            raw_tests = fd.read()
+    except FileNotFoundError:
+        print('file:',path_to_tests, 'not found')
+        return
+        
     r = re.compile(r'\s*input begin(.+?)input end\s+?output begin(.+?)output end\s*',flags=re.DOTALL)
 
     for i,test in enumerate(r.findall(raw_tests)):
