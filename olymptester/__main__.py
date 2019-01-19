@@ -6,6 +6,7 @@ import pathlib
 import sys
 import re
 import time
+import os
 
 # Message lambda
 fail_message = lambda s1,s2,s3,elapsed: \
@@ -48,14 +49,15 @@ def main():
     else:
         subproc = [str(path_to_exe)]
 
+    devnull = open(os.devnull,'w')
     try:
-        subprocess.check_call(subproc,timeout=1)
+        subprocess.check_call(subproc,timeout=1, stdout=devnull, stderr=devnull)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print('bad process call:',subproc)
         return
     except subprocess.TimeoutExpired:
         pass
-
+    
     raw_tests = ''
     try:
         with open(path_to_tests,'r') as fd:
