@@ -20,17 +20,17 @@ Correct:
 pass_message = lambda s1,elapsed:'Test {:3d} OK, {:5.3f} sec'.format(s1,elapsed)
 
 def run_test(subproc,test):
-    input_text = test[0].strip() 
-    output_text = test[1].strip() 
+    input_text = test[0].strip()
+    output_text = test[1].strip()
 
     with Popen(subproc,\
                 stdin=PIPE, stdout=PIPE,\
                 universal_newlines=True) as proc:
 
         proc_output = proc.communicate(input_text)[0]
-        if proc_output.strip() != output_text.strip(): 
+        if proc_output.strip() != output_text.strip():
             return proc_output
-        else: 
+        else:
             return None
 
 def main():
@@ -57,15 +57,15 @@ def main():
         return
     except subprocess.TimeoutExpired:
         pass
-    
+
     raw_tests = ''
     try:
-        with open(path_to_tests,'r') as fd:
+        with open(str(path_to_tests),'r') as fd:
             raw_tests = fd.read()
     except FileNotFoundError:
         print('file:',path_to_tests, 'not found')
         return
-        
+
     r = re.compile(r'\s*input begin(.+?)input end\s+?output begin(.+?)output end\s*',flags=re.DOTALL)
 
     for i,test in enumerate(r.findall(raw_tests)):
@@ -78,5 +78,5 @@ def main():
         else:
             print(pass_message(i,elapsed))
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     main()
