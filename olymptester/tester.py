@@ -37,8 +37,11 @@ def try_init_subproc(path_to_exe):
     devnull = open(os.devnull,'w')
     try:
         subprocess.check_call(subproc,timeout=1, stdout=devnull, stderr=devnull)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        raise AssertionError('bad process call: %s' % subproc)
     except subprocess.TimeoutExpired:
-        return subproc
+        pass
+    return subproc
 
 
 def try_read_test_file(path_to_tests):
@@ -53,6 +56,7 @@ def try_read_arguments():
     path_to_exe = pathlib.Path(sys.argv[1]).absolute()
     path_to_tests = pathlib.Path(sys.argv[2]).absolute()
     return path_to_exe, path_to_tests
+
 
 def main():
     try:
