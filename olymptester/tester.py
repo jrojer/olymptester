@@ -26,10 +26,8 @@ def run_test(subproc,test):
     output_text = test[1].strip()
     with Popen(subproc, stdin=PIPE, stdout=PIPE, universal_newlines=True) as proc:
         proc_output = proc.communicate(input_text)[0]
-        if proc_output.strip() != output_text.strip():
-            return proc_output
-        else:
-            return None
+        passed = proc_output.strip() == output_text.strip()
+        return proc_output, passed
 
 
 def try_init_subproc(path_to_exe):
@@ -70,13 +68,13 @@ def main():
     r = re.compile(r'\s*input begin(.+?)input end\s+?output begin(.+?)output end\s*',flags=re.DOTALL)
     for i,test in enumerate(r.findall(test_file_text)):
         start_time = time.time()
-        out = run_test(subproc,test)
+        out,passed = run_test(subproc,test)
         end_time = time.time()
         elapsed = end_time - start_time
-        if out:
-            print(fail_message(i,out.strip(),test[1].strip(),elapsed))
-        else:
+        if passed:
             print(pass_message(i,elapsed))
+        else:
+            print(fail_message(i,out.strip(),test[1].strip(),elapsed))
 
 
 if __name__ == '__main__':
