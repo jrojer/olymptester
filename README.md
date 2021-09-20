@@ -15,5 +15,46 @@ In the example, a program that inputs integer `x` from stdin and outputs `2*x` t
 In `example/cpp` there is 
  * `app.cpp` file containing the program 
  * tests file `app.txt`, containing stdin and stdout values of 2 test cases
- * Makefile (it's optional)
- * `run.sh` - a convinience script that runs make and olymptester
+ * `run.sh` - a convinience script that runs compilation and olymptester
+
+Program: 
+```c++
+#include<iostream>
+
+using namespace std;
+
+int main() {
+    int x;
+    cin >> x;
+    cout << 2*x;
+    return 0;
+}
+```
+
+Tests:
+```
+Test 1
+input begin
+1
+input end
+
+output begin
+2
+output end
+
+Test 2
+input begin
+33
+input end
+
+output begin
+66
+output end
+```
+
+Running:
+```
+$ ./run.sh app.cpp 
+Test   0 OK, 0.008 sec
+Test   1 OK, 0.008 sec
+```
