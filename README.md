@@ -1,4 +1,4 @@
-# Olymtester
+# Olymptester
 A convinient **tool** to code and test competitive programming apps (i.e. single file stdin-stdout apps).
 
 ## Usage: 
