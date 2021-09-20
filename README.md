@@ -3,11 +3,17 @@ A convinient **tool** and **project template** to code and test competitive prog
 
 ## Usage: 
 
-1. Create an app (cpp/java/py). See `olymptester/example/app/cpp` as example.
-2. Define the tests. See `olymptester/example/tests/app.txt` as example.
-3. Run the tester to test your solution. `python3 tester.py path/to/exe path/to/tests.txt`.
+1. Install olymptester package: `python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps olymptester`.
+2. Create an app (in C++, Java or Python). See `examples`.
+3. Define tests. See `examples`.
+4. Run the tester to test your solution. `python3 -m olymptester path/to/exe path/to/tests.txt`.
 
-## Demo:
-You can find a demo script at `olymptester/demo.sh`.
-It runs makefiles for cpp and java. Then it runs cpp executable, java class and python script against `app.txt` tests file.
-Each example app takes integer `x` from `stdin` and outputs `2*x` to `stdout`.
+## Example:
+
+In the example, a program that inputs integer `x` from stdin and outputs `2*x` to stdout is being tested by olymptester.
+
+In `example/cpp` there is 
+ * `app.cpp` file containing the program 
+ * tests file `app.txt`, containing stdin and stdout values of 2 test cases
+ * Makefile (it's optional)
+ * `run.sh` - a convinience script that runs make and olymptester
