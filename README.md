@@ -1,5 +1,5 @@
 # Olymptester
-A convinient **tool** to create and test competitive programming solutions (i.e. single file stdin-stdout apps).
+A convinient **tool** for creating and testing competitive programming solutions (i.e. single file stdin-stdout apps).
 
 ## Usage: 
 

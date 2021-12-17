@@ -32,6 +32,37 @@ import yaml
 
 
 
+cpp_template = '''
+#include<iostream>
+#define int int64_t
+using namespace std;
+
+int32_t main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int x;
+    cin >> x;
+    cout << 2*x;
+    return 0;
+}
+'''
+
+tests_file_template='''
+Test 1 simple:
+  input: |+
+    1
+  output: |+
+    2
+
+Test 2:
+  input: |+
+    33
+  output: |+
+    66 
+'''
+
+
 usage_string = '''Welcome to Olymptester!
     Usage: 
     > olymptester path/to/app path/to/tests'''
@@ -100,12 +131,40 @@ def try_read_test_file(path_to_tests):
         return fd.read()
 
 
-def try_read_arguments():
-    if len(sys.argv) != 3:
-        raise AssertionError(usage_string)
-    path_to_exe = pathlib.Path(sys.argv[1]).absolute()
-    path_to_tests = pathlib.Path(sys.argv[2]).absolute()
-    return path_to_exe, path_to_tests
+def parse_args():
+    def path(s):
+        return pathlib.Path(s).absolute()
+    size = len(sys.argv)
+    arr = sys.argv
+    assert size in [1,2,3,4], usage_string
+    if size == 1 or size == 2 and arr[1] == 'run':
+        return {
+            'path_to_program': path('solution.cpp'),
+            'path_to_tests' : path('tests.yml'),
+            'mode' : 'run',
+        }
+    if size == 2:
+        assert arr[1] in ['run','init'], usage_string
+        return {'mode': 'init', 'dir': path('.')}
+    if size == 3:
+        assert arr[1] in ['run','init'], usage_string
+        if arr[1] == 'run':
+            workdir = path(arr[2])
+            assert workdir.is_dir(), f'directory "{workdir.name}" does not exist'
+            return {
+                'path_to_program': workdir/'solution.cpp',
+                'path_to_tests' : workdir/'tests.yml',
+                'mode' : 'run',
+            }
+        else:
+            return {'mode': 'init', 'dir': arr[2]}
+    if size == 4:
+        assert arr[1] == 'run', usage_string
+        return {
+            'path_to_program': path(arr[1]),
+            'path_to_tests'  : path(arr[2]),
+            'mode' : 'run'
+        }
 
 
 def run_testing_subprocess(subproc, test_file_yml, print_func):
@@ -136,10 +195,31 @@ def run(path_to_program, path_to_tests, print_func):
     run_testing_subprocess(subproc, test_file_text, print_func)
 
 
+def init_cpp_template(dirname: str):
+    def assert_file_not_exists(p : pathlib.Path):
+        assert not (p.is_file() or p.is_dir()), f'file {p.name} already exists'
+    workdir = pathlib.Path(dirname)
+    solution_path = (workdir/'solution.cpp').absolute()
+    tests_path = (workdir/'tests.yml').absolute()
+    if workdir.absolute() != pathlib.Path('.').absolute():
+        assert_file_not_exists(workdir)
+    else:
+        assert_file_not_exists(solution_path)
+        assert_file_not_exists(tests_path)
+    workdir.mkdir(parents=True, exist_ok=True)
+    with open(solution_path, 'w') as f:
+        print(cpp_template, file=f)
+    with open(tests_path, 'w') as f:
+        print(tests_file_template, file=f)
+
+
 def main():
     try:
-        path_to_program, path_to_tests = try_read_arguments()
-        run(path_to_program, path_to_tests, print)
+        args = parse_args()
+        if args['mode'] == 'run':
+            run(args['path_to_program'], args['path_to_tests'], print)
+        elif args['mode'] == 'init':
+            init_cpp_template(args['dir'])
     except Exception as e:
         print(e)
         return

@@ -5,8 +5,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="olymptester",
-    version="1.0",
-    author="Alexey Roussanov",
+    version="1.1.1",
+    install_requires=['pyyaml'],
+    author="jrojer",
     author_email="cibid@yandex.ru",
     description="Competitive programming testing tool",
     long_description=long_description,
