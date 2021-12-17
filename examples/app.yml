@@ -1,0 +1,11 @@
+Test 1 simple:
+  input: |+
+    1
+  output: |+
+    2
+
+Test 2:
+  input: |+
+    33
+  output: |+
+    66 

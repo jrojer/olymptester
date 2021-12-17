@@ -28,10 +28,17 @@ import sys
 import re
 import time
 import os
+import yaml
+
+
+
+usage_string = '''Welcome to Olymptester!
+    Usage: 
+    > olymptester path/to/app path/to/tests'''
 
 
 def fail_message(s1, s2, s3, elapsed):
-    return '''FAILED test {:3d}, {:5.3f} sec
+    return '''FAILED test {:3s}, {:5.3f} sec
 Output:
 {}
 Correct:
@@ -39,25 +46,39 @@ Correct:
 
 
 def pass_message(s1, elapsed):
-    return 'Test {:3d} OK, {:5.3f} sec'.format(s1, elapsed)
+    return '{:20s} {:10s} {:5.3f} sec'.format(s1, 'OK', elapsed)
 
 
-def run_test(subproc, test):
-    input_text = test[0].strip()
-    output_text = test[1].strip()
+def run_test(subproc, input_text, output_text):
     with Popen(subproc, stdin=PIPE, stdout=PIPE, universal_newlines=True) as proc:
-        proc_output = proc.communicate(input_text)[0]
-        passed = proc_output.strip() == output_text.strip()
-        return proc_output, passed
+        return proc.communicate(input_text)[0]
 
 
-def try_init_subproc(path_to_exe):
-    subproc = [str(path_to_exe)]
+def compile_if_needed_and_get_path_to_exe(path_to_file: pathlib.Path):
+    if path_to_file.suffix == '.cpp':
+        path_to_exe = path_to_file.parent / 'app'
+        subproc = ['g++', '-std=c++11', '-o', str(path_to_exe), str(path_to_file)]
+    elif path_to_file.suffix == '.java':
+        path_to_exe = path_to_file.parent / (path_to_file.stem + '.class')
+        subproc = ['javac', path_to_file]
+    else:
+        subproc = None
+        path_to_exe = path_to_file
+    if subproc:
+        result = subprocess.run(subproc)
+        if result.returncode != 0 :
+            raise Exception("Build failed.")
+    return path_to_exe
+
+
+def init_exe_subproc(path_to_exe):
     if path_to_exe.suffix == '.py':
         subproc = ['python3', str(path_to_exe)]
     elif path_to_exe.suffix == '.class':
         subproc = ['java', '-cp',
                    str(path_to_exe.absolute().parent), str(path_to_exe.stem)]
+    else:
+        subproc = [str(path_to_exe)]
 
     devnull = open(os.devnull, 'w')
     try:
@@ -74,47 +95,51 @@ def try_init_subproc(path_to_exe):
 
 
 def try_read_test_file(path_to_tests):
+    assert path_to_tests.suffix in ['.yml', '.yaml'], str(path_to_tests.name) + ' is not a yaml file'
     with open(str(path_to_tests), 'r') as fd:
         return fd.read()
 
 
 def try_read_arguments():
     if len(sys.argv) != 3:
-        raise AssertionError(
-            'Usage: [python3 -m] olymptester path/to/app path/to/tests')
+        raise AssertionError(usage_string)
     path_to_exe = pathlib.Path(sys.argv[1]).absolute()
     path_to_tests = pathlib.Path(sys.argv[2]).absolute()
     return path_to_exe, path_to_tests
 
 
-def test_subprocess(subproc, test_file_text, print_func):
-    pattern = r'\s*input begin(.+?)input end\s+?output begin(.+?)output end\s*'
-    r = re.compile(pattern, flags=re.DOTALL)
-    for i, test in enumerate(r.findall(test_file_text)):
+def run_testing_subprocess(subproc, test_file_yml, print_func):
+    yml = yaml.safe_load(test_file_yml)
+    for test_name in yml.keys():
+        test_input = yml[test_name]['input'].strip()
+        test_output = yml[test_name]['output'].strip()
+
         start_time = time.time()
-        out, passed = run_test(subproc, test)
+        out = run_test(subproc, test_input, test_output)
+        passed = out.strip() == test_output
         end_time = time.time()
         elapsed = end_time - start_time
         if passed:
-            print_func(pass_message(i, elapsed))
+            print_func(pass_message(test_name, elapsed))
         else:
-            print_func(fail_message(i, out.strip(), test[1].strip(), elapsed))
+            print_func(fail_message(test_name, out.strip(), test_output.strip(), elapsed))    
 
 
-def run(path_to_exe, path_to_tests, print_func):
+def run(path_to_program, path_to_tests, print_func):
     try:
-        subproc = try_init_subproc(path_to_exe)
+        path_to_exe = compile_if_needed_and_get_path_to_exe(path_to_program)
+        subproc = init_exe_subproc(path_to_exe)
         test_file_text = try_read_test_file(path_to_tests)
     except Exception as e:
         print(e)
         return
-    test_subprocess(subproc, test_file_text, print_func)
+    run_testing_subprocess(subproc, test_file_text, print_func)
 
 
 def main():
     try:
-        path_to_exe, path_to_tests = try_read_arguments()
-        run(path_to_exe, path_to_tests, print)
+        path_to_program, path_to_tests = try_read_arguments()
+        run(path_to_program, path_to_tests, print)
     except Exception as e:
         print(e)
         return
