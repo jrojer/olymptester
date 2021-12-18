@@ -138,31 +138,43 @@ def parse_args():
     arr = sys.argv
     assert size in [1,2,3,4], usage_string
     if size == 1 or size == 2 and arr[1] == 'run':
+        solution = path('solution.cpp')
+        tests = path('tests.yml')
+        assert solution.is_file(), f'file {solution.name} does not exist'
+        assert tests.is_file(), f'file {tests.name} does not exist'
         return {
-            'path_to_program': path('solution.cpp'),
-            'path_to_tests' : path('tests.yml'),
+            'path_to_program': solution,
+            'path_to_tests' : tests,
             'mode' : 'run',
         }
     if size == 2:
-        assert arr[1] in ['run','init'], usage_string
+        assert arr[1] == 'init', usage_string
         return {'mode': 'init', 'dir': path('.')}
     if size == 3:
         assert arr[1] in ['run','init'], usage_string
         if arr[1] == 'run':
             workdir = path(arr[2])
+            solution = workdir/'solution.cpp'
+            tests = workdir/'tests.yml'
             assert workdir.is_dir(), f'directory "{workdir.name}" does not exist'
+            assert solution.is_file(), f'file {solution.name} does not exist'
+            assert tests.is_file(), f'file {tests.name} does not exist'
             return {
-                'path_to_program': workdir/'solution.cpp',
-                'path_to_tests' : workdir/'tests.yml',
+                'path_to_program': solution,
+                'path_to_tests' : tests,
                 'mode' : 'run',
             }
         else:
             return {'mode': 'init', 'dir': arr[2]}
     if size == 4:
         assert arr[1] == 'run', usage_string
+        solution = path(arr[1])
+        tests = path(arr[2])
+        assert solution.is_file(), f'file {solution.name} does not exist'
+        assert tests.is_file(), f'file {tests.name} does not exist'
         return {
-            'path_to_program': path(arr[1]),
-            'path_to_tests'  : path(arr[2]),
+            'path_to_program': solution,
+            'path_to_tests'  : tests,
             'mode' : 'run'
         }
 
