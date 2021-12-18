@@ -3,7 +3,19 @@ A convinient **tool** for creating and testing competitive programming solutions
 
 ## Usage: 
 
-1. Install olymptester package: `python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps olymptester`.
+0. Prerequisite: `pipx`
+  ```
+  python3 -m pip install --user pipx
+  python3 -m pipx ensurepath
+  ```
+1. Install olymptester package: 
+  ```
+  python3 -m pipx install git+https://github.com/jrojer/olymptester.git
+  ```
+  After installation, to upgrade to the version in this repo's master, do
+  ```
+  python3 -m pipx reinstall olymptester
+  ```
 2. Create an app (in C++, Java or Python). See `examples`.
 3. Define tests. See `examples`.
 4. Run the tester to test your solution. `python3 -m olymptester path/to/program path/to/tests.yml`.
