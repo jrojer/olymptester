@@ -20,36 +20,22 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+from olymptester.arg_parser import parse_args 
+from olymptester.arg_parser import validate_paths 
+from olymptester.arg_parser import path 
+from olymptester.cpp_template import cpp_template
+
 import subprocess
 from subprocess import Popen
 from subprocess import PIPE
 import pathlib
 import sys
-import re
 import time
 import os
 import yaml
 
-
-
-cpp_template = '''
-#include<iostream>
-#define int int64_t
-using namespace std;
-
-int32_t main() {
-    ios_base::sync_with_stdio(0);
-    cin.tie(0);
-
-    int x;
-    cin >> x;
-    cout << 2*x;
-    return 0;
-}
-'''
-
 tests_file_template='''
-Test 1 simple:
+Test 1:
   input: |+
     1
   output: |+
@@ -61,11 +47,6 @@ Test 2:
   output: |+
     66 
 '''
-
-
-usage_string = '''Welcome to Olymptester!
-    Usage: 
-    > olymptester path/to/app path/to/tests'''
 
 
 def fail_message(s1, s2, s3, elapsed):
@@ -80,9 +61,11 @@ def pass_message(s1, elapsed):
     return '{:20s} {:10s} {:5.3f} sec'.format(s1, 'OK', elapsed)
 
 
-def run_test(subproc, input_text, output_text):
-    with Popen(subproc, stdin=PIPE, stdout=PIPE, universal_newlines=True) as proc:
-        return proc.communicate(input_text)[0]
+def exec_message(s1, s2, elapsed):
+    return '''{:3s}, {:5.3f} sec
+Output:
+{}
+'''.format(s1, elapsed, s2)
 
 
 def compile_if_needed_and_get_path_to_exe(path_to_file: pathlib.Path):
@@ -125,86 +108,37 @@ def init_exe_subproc(path_to_exe):
     return subproc
 
 
-def try_read_test_file(path_to_tests):
-    assert path_to_tests.suffix in ['.yml', '.yaml'], str(path_to_tests.name) + ' is not a yaml file'
-    with open(str(path_to_tests), 'r') as fd:
-        return fd.read()
+def execute_on_input(subproc, input_text):
+    def execute(input_text):
+        with Popen(subproc, stdin=PIPE, stdout=PIPE, universal_newlines=True) as proc:
+                return proc.communicate(input_text)[0]
+
+    start_time = time.time()
+    out = execute(input_text)
+    end_time = time.time()
+    elapsed = end_time - start_time
+    return out, elapsed  
 
 
-def parse_args():
-    def path(s):
-        return pathlib.Path(s).absolute()
-    size = len(sys.argv)
-    arr = sys.argv
-    assert size in [1,2,3,4], usage_string
-    if size == 1 or size == 2 and arr[1] == 'run':
-        solution = path('solution.cpp')
-        tests = path('tests.yml')
-        assert solution.is_file(), f'file {solution.name} does not exist'
-        assert tests.is_file(), f'file {tests.name} does not exist'
-        return {
-            'path_to_program': solution,
-            'path_to_tests' : tests,
-            'mode' : 'run',
-        }
-    if size == 2:
-        assert arr[1] == 'init', usage_string
-        return {'mode': 'init', 'dir': path('.')}
-    if size == 3:
-        assert arr[1] in ['run','init'], usage_string
-        if arr[1] == 'run':
-            workdir = path(arr[2])
-            solution = workdir/'solution.cpp'
-            tests = workdir/'tests.yml'
-            assert workdir.is_dir(), f'directory "{workdir.name}" does not exist'
-            assert solution.is_file(), f'file {solution.name} does not exist'
-            assert tests.is_file(), f'file {tests.name} does not exist'
-            return {
-                'path_to_program': solution,
-                'path_to_tests' : tests,
-                'mode' : 'run',
-            }
-        else:
-            return {'mode': 'init', 'dir': arr[2]}
-    if size == 4:
-        assert arr[1] == 'run', usage_string
-        solution = path(arr[1])
-        tests = path(arr[2])
-        assert solution.is_file(), f'file {solution.name} does not exist'
-        assert tests.is_file(), f'file {tests.name} does not exist'
-        return {
-            'path_to_program': solution,
-            'path_to_tests'  : tests,
-            'mode' : 'run'
-        }
+def run_exec_subprocess(subproc, yml, test_name):
+    assert test_name in yml, f'"{test_name}" not found'
+    test_input = yml[test_name]['input'].strip()
+    out, elapsed = execute_on_input(subproc, test_input)
+    print(exec_message(test_name, out.strip(), elapsed))
 
 
-def run_testing_subprocess(subproc, test_file_yml, print_func):
-    yml = yaml.safe_load(test_file_yml)
-    for test_name in yml.keys():
-        test_input = yml[test_name]['input'].strip()
+def run_testing_subprocess(subproc, yml, test_names = None):
+    if test_names is None:
+        test_names = yml.keys()
+
+    for test_name in test_names:
         test_output = yml[test_name]['output'].strip()
-
-        start_time = time.time()
-        out = run_test(subproc, test_input, test_output)
-        passed = out.strip() == test_output
-        end_time = time.time()
-        elapsed = end_time - start_time
-        if passed:
-            print_func(pass_message(test_name, elapsed))
+        test_input = yml[test_name]['input'].strip()
+        out, elapsed = execute_on_input(subproc, test_input) 
+        if out.strip() == test_output:
+            print(pass_message(test_name, elapsed))
         else:
-            print_func(fail_message(test_name, out.strip(), test_output.strip(), elapsed))    
-
-
-def run(path_to_program, path_to_tests, print_func):
-    try:
-        path_to_exe = compile_if_needed_and_get_path_to_exe(path_to_program)
-        subproc = init_exe_subproc(path_to_exe)
-        test_file_text = try_read_test_file(path_to_tests)
-    except Exception as e:
-        print(e)
-        return
-    run_testing_subprocess(subproc, test_file_text, print_func)
+            print(fail_message(test_name, out.strip(), test_output.strip(), elapsed)) 
 
 
 def init_cpp_template(dirname: str):
@@ -225,13 +159,32 @@ def init_cpp_template(dirname: str):
         print(tests_file_template, file=f)
 
 
+def try_read_test_file(path_to_tests):
+    assert path_to_tests.suffix in ['.yml', '.yaml'], str(path_to_tests.name) + ' is not a yaml file'
+    with open(str(path_to_tests), 'r') as fd:
+        return fd.read()
+
+
 def main():
     try:
         args = parse_args()
-        if args['mode'] == 'run':
-            run(args['path_to_program'], args['path_to_tests'], print)
+        validate_paths(args)
+        if args['mode'] in ['run', 'test']:
+            path_to_program = path(args['workdir']) / args['path_to_program']
+            path_to_tests = path(args['workdir']) / args['path_to_tests']
+
+            path_to_exe = compile_if_needed_and_get_path_to_exe(path_to_program)
+            test_file_text = try_read_test_file(path_to_tests)
+            subproc = init_exe_subproc(path_to_exe)
+            yml = yaml.safe_load(test_file_text)
+            if args['test_name'] is None:
+                args['test_name'] = list(yml.keys())[0]
+            if args['mode'] == 'test':
+                run_testing_subprocess(subproc, yml)
+            elif args['mode'] == 'run':
+                run_exec_subprocess(subproc, yml, args['test_name'])
         elif args['mode'] == 'init':
-            init_cpp_template(args['dir'])
+            init_cpp_template(path(args['dir']))
     except Exception as e:
         print(e)
         return
