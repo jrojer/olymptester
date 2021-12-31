@@ -1,22 +1,37 @@
 
-cpp_template = '''
+cpp_template = '''\
 #include<iostream>
 #include<algorithm>
-#include<cassert>
 #include<functional>
 #include<vector>
 #include<unordered_map>
 #include<unordered_set>
 #include<map>
 #include<set>
+#include<string>
+#include<cstdlib>
 
 #define int int64_t
 using namespace std;
+
+#define verify(condition) { \
+  if(!(condition)) { \
+    cout << "line: " << __LINE__ << ", expected: " << #condition << endl; \
+    exit(0); \
+  } \
+} 
 
 
 int n;
 int m;
 vector<int> vec;
+
+
+void test(){
+
+    verify(1 == 1);
+    cout << "OK" << endl;
+}
 
 int32_t main() {
     ios_base::sync_with_stdio(0);
