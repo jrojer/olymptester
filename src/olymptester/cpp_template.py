@@ -10,6 +10,8 @@ cpp_template = '''\
 #include<set>
 #include<string>
 #include<cstdlib>
+#include <math.h> 
+
 
 #define int int64_t
 using namespace std;
