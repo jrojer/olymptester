@@ -67,11 +67,12 @@ Output:
 {}
 '''.format(s1, elapsed, s2)
 
+cpp_compilation_flags = ['-Wfatal-errors', '-std=c++11']
 
 def compile_if_needed_and_get_path_to_exe(path_to_file: pathlib.Path):
     if path_to_file.suffix == '.cpp':
         path_to_exe = path_to_file.parent / 'app'
-        subproc = ['g++', '-std=c++11', '-o', str(path_to_exe), str(path_to_file)]
+        subproc = ['g++', *cpp_compilation_flags, '-o', str(path_to_exe), str(path_to_file)]
     elif path_to_file.suffix == '.java':
         path_to_exe = path_to_file.parent / (path_to_file.stem + '.class')
         subproc = ['javac', path_to_file]

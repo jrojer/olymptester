@@ -22,6 +22,7 @@ using namespace std;
     exit(0); \
   } \
 } 
+#define verifyEquals(a,b) {   if(!((a) == (b))) {     cout << "line: " << __LINE__ << ", expected: " << (a) << " to be equal " << (b) << endl;     exit(0);   } } 
 
 
 int n;
