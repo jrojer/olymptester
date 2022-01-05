@@ -67,7 +67,7 @@ Output:
 {}
 '''.format(s1, elapsed, s2)
 
-cpp_compilation_flags = ['-Wfatal-errors', '-std=c++11']
+cpp_compilation_flags = ['-Wfatal-errors', '-std=c++17']
 
 def compile_if_needed_and_get_path_to_exe(path_to_file: pathlib.Path):
     if path_to_file.suffix == '.cpp':
